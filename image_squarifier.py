@@ -31,7 +31,6 @@ def get_edge_colors(im):
     for y in range(im.size[1]):
         result.append(im.getpixel((0, y)))
         result.append(im.getpixel((im.size[0] - 1, y)))
-    assert (im.size[0] + im.size[1]) * 2 == len(result)
     return result
 
 
