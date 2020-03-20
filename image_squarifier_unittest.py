@@ -26,12 +26,12 @@ class image_squarifier(unittest.TestCase):
     def test_resize_im(self):
         new_im = resize_im(40, im_v)
         self.assertLessEqual(new_im.size[1], 40, "Should be <= 40")
-        new_im = resize_im(40, small_im_v)
-        self.assertLessEqual(new_im.size[1], 40, "Should be <= 40")
-        new_im = resize_im(40, im_h)
-        self.assertLessEqual(new_im.size[0], 40, "Should be <= 40")
-        new_im = resize_im(40, small_im_h)
-        self.assertLessEqual(new_im.size[0], 40, "Should be <= 40")
+        new_im = resize_im(30, small_im_v)
+        self.assertLessEqual(new_im.size[1], 30, "Should be <= 30")
+        new_im = resize_im(60, im_h)
+        self.assertLessEqual(new_im.size[0], 60, "Should be <= 60")
+        new_im = resize_im(70, small_im_h)
+        self.assertLessEqual(new_im.size[0], 70, "Should be <= 70")
 
     def test_paste_in_middle(self):
         new_im = paste_in_middle(im_v, small_im_v)
@@ -42,6 +42,18 @@ class image_squarifier(unittest.TestCase):
         self.assertEqual(new_im.getpixel((10, 15)), (60, 20, 40), "Should be (60, 20, 40)")
         self.assertEqual(new_im.getpixel((30, 35)), (30, 10, 20), "Should be (30, 10, 20)")
         self.assertEqual(new_im.getpixel((29, 34)), (60, 20, 40), "Should be (60, 20, 40)")
+
+    def test_get_new_path(self):
+        self.assertEqual(get_new_path("/home/user/image"), "/home/user/image_resized",
+                         "Should be \"/home/user/image_resized\"")
+        self.assertEqual(get_new_path("/home/user/image/"), "/home/user/image_resized",
+                         "Should be \"/home/user/image_resized\"")
+
+    def test_is_int(self):
+        self.assertTrue(is_int("23"), "Should be True")
+        self.assertFalse(is_int("-23"), "Should be False")
+        self.assertFalse(is_int("0"), "Should be False")
+        self.assertFalse(is_int(""), "Should be False")
 
 
 if __name__ == '__main__':

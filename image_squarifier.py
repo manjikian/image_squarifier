@@ -1,22 +1,51 @@
 from PIL import Image
 from pathlib import Path
 from os.path import join
-import re
+from os import path
+import os
+import sys
 
 
 def main():
-    files = list(Path("/media/sf_KTH/KEX/English/Img/").rglob("*.[pP][nN][gG]"))
+    if len(sys.argv) != 3:
+        print("Error, two arguments are required: <size> <directory_location>")
+        exit(1)
+    directory = sys.argv[2]
+    if directory == "/":
+        print("Error, root directory cannot be used.")
+        exit(1)
+    if not path.isdir(directory):
+        print("Error, invalid directory path.")
+        exit(1)
+
+    size = sys.argv[1]
+    if not is_int(size):
+        print("Error, invalid size. Size must be a positive integer.")
+        exit(1)
+
+    size = int(size)
+
+    files = list(Path(directory).rglob("*.[pP][nN][gG]"))
+    print("Resizing", len(files), "files...")
     for file in files:
-        im = Image.open()
+        im = Image.open(file)
+        if im.mode != "RGB":
+            continue
         edge_colors = get_edge_colors(im)
         average = get_averages(edge_colors)
         interval = get_majority_interval(average, edge_colors)
         color = get_edge_common_color(average, edge_colors, interval)
-        resized_im = resize_im(40, im)
+        resized_im = resize_im(size, im)
         new_im = Image.new("RGB", (40, 40), color)
         result = paste_in_middle(new_im, resized_im)
 
-        result.save("/home/l/Documents/test.jpg")
+        new_file_path = Path(join(get_new_path(directory), str(file.absolute())[len(directory):]))
+        if not os.path.exists(new_file_path.parent):
+            os.makedirs(new_file_path.parent)
+        result.save(new_file_path)
+
+    print("Resizing complete")
+    exit(0)
 
 
 def get_edge_colors(im):
@@ -52,6 +81,7 @@ def get_averages(colors):
         red += c[0]
         green += c[1]
         blue += c[2]
+
     return (red / len(colors), green / len(colors), blue / len(colors))
 
 
@@ -105,7 +135,7 @@ def get_edge_common_color(avg, colors, interval):
 def in_interval(interval, sample, avg):
     """
     A function that will check if a given value is within an interval.
-    A tolorence of 10 is added to the average value to include colors that are close to the
+    A tolorence of 20 is added to the average value to include colors that are close to the
     avarage but form the other side.
     :param interval: An integer that will specify the interval. If 0 then the interval is
     between 0 and ``avg``; if 1 then the interval is between ``avg`` and 255.
@@ -114,23 +144,22 @@ def in_interval(interval, sample, avg):
     :param avg: A decimal value between 0 and 255.
     :return: A boolean value.
     """
-    if interval and sample > (avg - 10): return True
-    if not interval and sample < (avg + 10): return True
+    if interval and sample > (avg - 20): return True
+    if not interval and sample < (avg + 20): return True
     return False
 
 
-def resize_im(size_of_longest_side, image):
+def resize_im(size, image):
     """
-    A function that will resize an image.
+    A function that will resize an image so that its longest side is as long as `size`.
     :param size: The target size as a tuple (x,y)
     :param image: The image to resize
     :return: The new resized image
     """
-    size = None
     if image.size[0] > image.size[1]:
-        size = (40, round(40 * (image.size[1] / image.size[0])))
+        size = (size, round(size * (image.size[1] / image.size[0])))
     else:
-        size = (round(40 * (image.size[0] / image.size[1])), 40)
+        size = (round(size * (image.size[0] / image.size[1])), size)
     return image.resize(size, Image.LANCZOS)
 
 
@@ -148,6 +177,36 @@ def paste_in_middle(background, foreground):
     box = (x1, y1, x2, y2)
     background.paste(foreground, box)
     return background
+
+
+def get_new_path(input):
+    """
+    This function will take a path of a directory and return a new path of a new directory in
+    the parent directory of the input path. `/home/user/images` will return `/home/user/images_resized`
+    :param path: The input path as a string.
+    :return: The new path as a string.
+    """
+    if input[-1] == '/':
+        input = input[:-1]
+    return input + "_resized"
+
+
+def is_int(input):
+    """
+    A function that checks whether a given number is a positive integer
+    :param input: The string to check.
+    :return: A boolean value.
+    """
+    if len(input) == 0:
+        return False
+    try:
+        x = int(input)
+        if x < 1:
+            return False
+        else:
+            return True
+    except:
+        return False
 
 
 if __name__ == '__main__':
