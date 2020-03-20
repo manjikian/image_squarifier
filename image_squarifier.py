@@ -1,19 +1,22 @@
 from PIL import Image
+from pathlib import Path
+from os.path import join
+import re
 
 
 def main():
-    im = Image.open("/media/sf_KTH/KEX/English/Img/GoodImg/Bmp/Sample033/img033-00023.png")
-    print(im.format, im.size, im.mode)
+    files = list(Path("/media/sf_KTH/KEX/English/Img/").rglob("*.[pP][nN][gG]"))
+    for file in files:
+        im = Image.open()
+        edge_colors = get_edge_colors(im)
+        average = get_averages(edge_colors)
+        interval = get_majority_interval(average, edge_colors)
+        color = get_edge_common_color(average, edge_colors, interval)
+        resized_im = resize_im(40, im)
+        new_im = Image.new("RGB", (40, 40), color)
+        result = paste_in_middle(new_im, resized_im)
 
-    edge_colors = get_edge_colors(im)
-    average = get_averages(edge_colors)
-    interval = get_majority_interval(average, edge_colors)
-    color = get_edge_common_color(average, edge_colors, interval)
-    print(average)
-    print(interval)
-    print(color)
-
-    im.save("/home/l/Documents/test.jpg")
+        result.save("/home/l/Documents/test.jpg")
 
 
 def get_edge_colors(im):
@@ -114,6 +117,37 @@ def in_interval(interval, sample, avg):
     if interval and sample > (avg - 10): return True
     if not interval and sample < (avg + 10): return True
     return False
+
+
+def resize_im(size_of_longest_side, image):
+    """
+    A function that will resize an image.
+    :param size: The target size as a tuple (x,y)
+    :param image: The image to resize
+    :return: The new resized image
+    """
+    size = None
+    if image.size[0] > image.size[1]:
+        size = (40, round(40 * (image.size[1] / image.size[0])))
+    else:
+        size = (round(40 * (image.size[0] / image.size[1])), 40)
+    return image.resize(size, Image.LANCZOS)
+
+
+def paste_in_middle(background, foreground):
+    """
+    The function will past the foreground image on the middle of the background image.
+    :param background: The bottom image. Must be larger than the foreground image.
+    :param foreground: The top image. Must be smaller than the background image.
+    :return: The new merged image.
+    """
+    x1 = round((background.size[0] - foreground.size[0]) / 2)
+    y1 = round((background.size[1] - foreground.size[1]) / 2)
+    x2 = x1 + foreground.size[0]
+    y2 = y1 + foreground.size[1]
+    box = (x1, y1, x2, y2)
+    background.paste(foreground, box)
+    return background
 
 
 if __name__ == '__main__':
