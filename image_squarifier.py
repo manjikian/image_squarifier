@@ -36,7 +36,7 @@ def main():
         interval = get_majority_interval(average, edge_colors)
         color = get_edge_common_color(average, edge_colors, interval)
         resized_im = resize_im(size, im)
-        new_im = Image.new("RGB", (40, 40), color)
+        new_im = Image.new("RGB", (size, size), color)
         result = paste_in_middle(new_im, resized_im)
 
         new_file_path = Path(join(get_new_path(directory), str(file.absolute())[len(directory):]))
